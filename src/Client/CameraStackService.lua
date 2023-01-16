@@ -21,6 +21,12 @@ assert(RunService:IsClient(), "[CameraStackService] - Only require CameraStackSe
 
 local CameraStackService = {}
 CameraStackService.ServiceName = "CameraStackService"
+CameraStackService._cameraStack = nil
+CameraStackService._defaultCamera = nil
+CameraStackService._rawDefaultCamera = nil
+CameraStackService._impulseCamera = nil
+CameraStackService._maid = nil
+CameraStackService._doNotUseDefaultCamera = nil
 
 --[=[
 	Initializes a new camera stack. Should be done via the ServiceBag.
@@ -29,25 +35,25 @@ CameraStackService.ServiceName = "CameraStackService"
 function CameraStackService:Init(serviceBag)
 	assert(ServiceBag.isServiceBag(serviceBag), "Not a valid service bag")
 
-	self._maid = Maid.new()
-	self._key = HttpService:GenerateGUID(false)
+	CameraStackService._maid = Maid.new()
+	CameraStackService._key = HttpService:GenerateGUID(false)
 
-	self._cameraStack = CameraStack.new()
+	CameraStackService._cameraStack = CameraStack.new()
 
 	-- Initialize default cameras
-	self._rawDefaultCamera = DefaultCamera.new()
-	self._maid:GiveTask(self._rawDefaultCamera)
+	CameraStackService._rawDefaultCamera = DefaultCamera.new()
+	CameraStackService._maid:GiveTask(CameraStackService._rawDefaultCamera)
 
-	self._impulseCamera = ImpulseCamera.new()
-	self._defaultCamera = (self._rawDefaultCamera + self._impulseCamera):SetMode("Relative")
+	CameraStackService._impulseCamera = ImpulseCamera.new()
+	CameraStackService._defaultCamera = (CameraStackService._rawDefaultCamera + CameraStackService._impulseCamera):SetMode("Relative")
 
 	-- Add camera to stack
-	self:Add(self._defaultCamera)
+	CameraStackService:Add(CameraStackService._defaultCamera)
 
-	RunService:BindToRenderStep("CameraStackUpdateInternal" .. self._key, Enum.RenderPriority.Camera.Value + 75, function()
+	RunService:BindToRenderStep("CameraStackUpdateInternal" .. CameraStackService._key, Enum.RenderPriority.Camera.Value + 75, function()
 		debug.profilebegin("camerastackservice")
 
-		local state = self:GetTopState()
+		local state = CameraStackService:GetTopState()
 		if state then
 			state:Set(Workspace.CurrentCamera)
 		end
@@ -55,16 +61,16 @@ function CameraStackService:Init(serviceBag)
 		debug.profileend()
 	end)
 
-	self._maid:GiveTask(function()
-		RunService:UnbindFromRenderStep("CameraStackUpdateInternal" .. self._key)
+	CameraStackService._maid:GiveTask(function()
+		RunService:UnbindFromRenderStep("CameraStackUpdateInternal" .. CameraStackService._key)
 	end)
 end
 
 function CameraStackService:Start()
-	self._started = true
+	CameraStackService._started = true
 
 	-- TODO: Allow rebinding
-	if self._doNotUseDefaultCamera then
+	if CameraStackService._doNotUseDefaultCamera then
 		Workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
 
 		-- TODO: Handle camera deleted too!
@@ -72,7 +78,7 @@ function CameraStackService:Start()
 			Workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
 		end)
 	else
-		self._rawDefaultCamera:BindToRenderStep()
+		CameraStackService._rawDefaultCamera:BindToRenderStep()
 	end
 end
 
@@ -81,9 +87,9 @@ end
 	@param doNotUseDefaultCamera boolean
 ]=]
 function CameraStackService:SetDoNotUseDefaultCamera(doNotUseDefaultCamera)
-	assert(not self._started, "Already started")
+	assert(not CameraStackService._started, "Already started")
 
-	self._doNotUseDefaultCamera = doNotUseDefaultCamera
+	CameraStackService._doNotUseDefaultCamera = doNotUseDefaultCamera
 end
 
 --[=[
@@ -91,18 +97,18 @@ end
 	@return function -- Function to cancel disable
 ]=]
 function CameraStackService:PushDisable()
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:PushDisable()
+	return CameraStackService._cameraStack:PushDisable()
 end
 
 --[=[
 	Outputs the camera stack. Intended for diagnostics.
 ]=]
 function CameraStackService:PrintCameraStack()
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:PrintCameraStack()
+	return CameraStackService._cameraStack:PrintCameraStack()
 end
 
 --[=[
@@ -110,9 +116,9 @@ end
 	@return SummedCamera -- DefaultCamera + ImpulseCamera
 ]=]
 function CameraStackService:GetDefaultCamera()
-	assert(self._defaultCamera, "Not initialized")
+	assert(CameraStackService._defaultCamera, "Not initialized")
 
-	return self._defaultCamera
+	return CameraStackService._defaultCamera
 end
 
 --[=[
@@ -120,7 +126,7 @@ end
 
 	Shaking the camera:
 	```lua
-	self._cameraStackService:GetImpulseCamera():Impulse(Vector3.new(0.25, 0, 0.25*(math.random()-0.5)))
+	CameraStackService._cameraStackService:GetImpulseCamera():Impulse(Vector3.new(0.25, 0, 0.25*(math.random()-0.5)))
 	```
 
 	You can also sum the impulse camera into another effect to layer the shake on top of the effect
@@ -129,15 +135,15 @@ end
 	```lua
 	-- Adding global custom camera shake to a custom camera effect
 	local customCameraEffect = ...
-	return (customCameraEffect + self._cameraStackService:GetImpulseCamera()):SetMode("Relative")
+	return (customCameraEffect + CameraStackService._cameraStackService:GetImpulseCamera()):SetMode("Relative")
 	```
 
 	@return ImpulseCamera
 ]=]
 function CameraStackService:GetImpulseCamera()
-	assert(self._impulseCamera, "Not initialized")
+	assert(CameraStackService._impulseCamera, "Not initialized")
 
-	return self._impulseCamera
+	return CameraStackService._impulseCamera
 end
 
 --[=[
@@ -145,9 +151,9 @@ end
 	@return DefaultCamera
 ]=]
 function CameraStackService:GetRawDefaultCamera()
-	assert(self._rawDefaultCamera, "Not initialized")
+	assert(CameraStackService._rawDefaultCamera, "Not initialized")
 
-	return self._rawDefaultCamera
+	return CameraStackService._rawDefaultCamera
 end
 
 --[=[
@@ -155,9 +161,9 @@ end
 	@return CameraEffect
 ]=]
 function CameraStackService:GetTopCamera()
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:GetTopCamera()
+	return CameraStackService._cameraStack:GetTopCamera()
 end
 
 --[=[
@@ -165,9 +171,9 @@ end
 	@return CameraState?
 ]=]
 function CameraStackService:GetTopState()
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:GetTopState()
+	return CameraStackService._cameraStack:GetTopState()
 end
 
 --[=[
@@ -177,9 +183,9 @@ end
 	@return (CameraState) -> () -- Function to set the state
 ]=]
 function CameraStackService:GetNewStateBelow()
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:GetNewStateBelow()
+	return CameraStackService._cameraStack:GetNewStateBelow()
 end
 
 --[=[
@@ -189,9 +195,9 @@ end
 
 ]=]
 function CameraStackService:GetIndex(state)
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:GetIndex(state)
+	return CameraStackService._cameraStack:GetIndex(state)
 end
 
 --[=[
@@ -204,9 +210,9 @@ end
 	@return { CameraState<T> }
 ]=]
 function CameraStackService:GetRawStack()
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:GetRawStack()
+	return CameraStackService._cameraStack:GetRawStack()
 end
 
 --[=[
@@ -215,9 +221,9 @@ end
 	@return CameraStack
 ]=]
 function CameraStackService:GetCameraStack()
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:GetStack()
+	return CameraStackService._cameraStack:GetStack()
 end
 
 --[=[
@@ -225,9 +231,9 @@ end
 	@param state CameraState
 ]=]
 function CameraStackService:Remove(state)
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:Remove(state)
+	return CameraStackService._cameraStack:Remove(state)
 end
 
 --[=[
@@ -235,13 +241,13 @@ end
 	@param state CameraState
 ]=]
 function CameraStackService:Add(state)
-	assert(self._cameraStack, "Not initialized")
+	assert(CameraStackService._cameraStack, "Not initialized")
 
-	return self._cameraStack:Add(state)
+	return CameraStackService._cameraStack:Add(state)
 end
 
 function CameraStackService:Destroy()
-	self._maid:DoCleaning()
+	CameraStackService._maid:DoCleaning()
 end
 
 return CameraStackService
