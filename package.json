@@ -1,5 +1,5 @@
 {
-  "name": "@quenty/camera",
+  "name": "@bark_ing/camera",
   "version": "9.6.0",
   "description": "Quenty's camera system for Roblox",
   "keywords": [
@@ -9,11 +9,11 @@
     "camera"
   ],
   "bugs": {
-    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+    "url": "https://github.com/bark-ing/camera/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "url": "https://github.com/bark-ing/camera.git",
     "directory": "src/camera/"
   },
   "funding": {
@@ -22,7 +22,8 @@
   },
   "license": "MIT",
   "contributors": [
-    "Quenty"
+    "Quenty",
+    "Bark_ing"
   ],
   "dependencies": {
     "@quenty/acceltween": "^2.2.1",
