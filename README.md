@@ -17,7 +17,7 @@ CameraStackService provides a camera stack of objects that can report a camera s
 
 ## Installation
 ```
-npm install @quenty/camera --save
+npm install @bark_ing/camera --save
 ```
 
 ## Features
